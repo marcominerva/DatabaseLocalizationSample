@@ -3,6 +3,7 @@ using DatabaseLocalizationSample.Models;
 using Microsoft.EntityFrameworkCore;
 using TinyHelpers.AspNetCore.Extensions;
 using TinyHelpers.AspNetCore.Swagger;
+using TinyHelpers.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,8 +32,8 @@ app.UseHttpsRedirection();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    _ = app.UseSwagger();
-    _ = app.UseSwaggerUI();
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseRouting();
@@ -42,20 +43,12 @@ app.MapGet("/api/landmarks", async (string name, ApplicationDbContext dbContext)
 {
     var language = Thread.CurrentThread.CurrentUICulture.TwoLetterISOLanguageName;
 
-    //var dbLandmarks = await dbContext.Landmarks
-    //    .Include(l => l.Translations.Where(t => t.Language == language))
-    //    .ToListAsync();
-
-    var query = dbContext.Landmarks
-        .Include(l => l.Translations.Where(t => t.Language == language)).AsQueryable();
-
-    if (!string.IsNullOrWhiteSpace(name))
-    {
-        query = query.Where(l => l.Translations.Any(t => t.Language == language && t.Name.Contains(name))
-            || l.Name.Contains(name));
-    }
-
-    var dbLandmarks = await query.ToListAsync();
+    var dbLandmarks = await dbContext.Landmarks
+        .Include(l => l.Translations.Where(t => t.Language == language))
+        .WhereIf(name.HasValue(),
+            l => l.Translations.Any(t => t.Language == language && t.Name.Contains(name))
+            || l.Name.Contains(name))
+        .ToListAsync();
 
     var landmarks = dbLandmarks.Select(l => new Landmark
     {
