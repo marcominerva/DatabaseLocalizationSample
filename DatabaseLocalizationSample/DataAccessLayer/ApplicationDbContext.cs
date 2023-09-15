@@ -15,7 +15,9 @@ public class ApplicationDbContext : DbContext
     {
     }
 
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
         => modelBuilder.ApplyConfigurationsFromAssembly(Assembly.GetExecutingAssembly());
+
+    //protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+    //    => configurationBuilder.Conventions.Add(_ => new BlankTriggerAddingConvention());
 }
